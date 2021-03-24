@@ -41,7 +41,6 @@ def get_category_products(url):
     for cat_name in categ_list:
         params = {
             "records_per_page": 12,
-            #"parent_group_code": cat_name['parent_group_code']
             "categories": cat_name['parent_group_code']
         }
         response_prod: requests.Response = requests.get(url, params=params)
