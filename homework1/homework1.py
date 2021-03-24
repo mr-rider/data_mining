@@ -21,7 +21,7 @@ import requests
 import json
 from pathlib import Path
 
-url_categ = "https://5ka.ru/api/v2/categories/716/"  # категории товаров
+url_categ = "https://5ka.ru/api/v2/categories/"  # категории товаров
 url = "https://5ka.ru/api/v2/special_offers/"  # акции
 
 
@@ -41,17 +41,18 @@ def get_category_products(url):
     for cat_name in categ_list:
         params = {
             "records_per_page": 12,
-            "categories": cat_name['group_code']
+            #"parent_group_code": cat_name['parent_group_code']
+            "categories": cat_name['parent_group_code']
         }
         response_prod: requests.Response = requests.get(url, params=params)
         if response_prod.status_code == 200:
             # путь к файлу
-            html_file_categ = Path(__file__).parent.joinpath(f'{cat_name["group_code"]}.json')
+            html_file_categ = Path(__file__).parent.joinpath(f'{cat_name["parent_group_code"]}.json')
             # создаем начальный словарь
             response_prod_json = {"category_name": [], "category_code": []}
             # добовляем значения с кодом и названием категории
             response_prod_json.update(
-                {"category_name": cat_name['group_name'], "category_code": cat_name['group_code']})
+                {"category_name": cat_name['parent_group_name'], "category_code": cat_name['parent_group_code']})
             # добавляем результат запроса товаров
             response_prod_json.update(response_prod.json())
             # cохраняем файл
