@@ -19,10 +19,28 @@ import requests
 from urllib.parse import urljoin
 import bs4
 import pymongo
-import datetime
+import datetime as dt
+
+
+MONTHS = {
+        "янв" : 1,
+        "фев": 2,
+        "мар": 3,
+        "апр": 4,
+        "май": 5,
+        "мая": 5,
+        "июн": 6,
+        "июл": 7,
+        "авг": 8,
+        "сен": 9,
+        "окт": 10,
+        "ноя": 11,
+        "дек": 12
+    }
 
 
 class MagnitParse:
+
     def __init__(self, start_url, mongo_url):
         self.start_url = start_url
         client = pymongo.MongoClient(mongo_url)
@@ -57,13 +75,26 @@ class MagnitParse:
             "image_url": lambda a: urljoin(
                 self.start_url, a.find("picture").find("img").attrs.get("data-src", "/"),
             ),
-            "date_from": lambda a: (a.find("div", attrs={"class": "card-sale__date"}).find("p")).text
-                                   + " " + str(datetime.datetime.now().year),
-            "date_to": lambda a: (a.find("div", attrs={"class": "card-sale__date"}).p.find_next_siblings("p")).text
-                                   + " " + str(datetime.datetime.now().year)
+            "date_from": lambda a: self.__get_date(a.find("div", attrs={"class": "card-sale__date"}).text)[0],
+            "date_to": lambda a: self.__get_date(a.find("div", attrs={"class": "card-sale__date"}).text)[1],
         }
 
         return data_template
+
+    def __get_date(self, date_string) -> list:
+        date_list = date_string.replace("с ", "", 1).replace("\n", "").split("до")
+        result = []
+        for date in date_list:
+            temp_date = date.split()
+            result.append(
+                dt.datetime(
+                    year=dt.datetime.now().year,
+                    day=int(temp_date[0]),
+                    month=MONTHS[temp_date[1][:3]],
+                )
+            )
+
+        return result
 
     def run(self):
         for product in self._parse(self.get_soup(self.start_url)):
@@ -90,3 +121,8 @@ if __name__ == "__main__":
     mongo_url = "mongodb://localhost:27017"
     parser = MagnitParse(url, mongo_url)
     parser.run()
+
+
+
+
+
